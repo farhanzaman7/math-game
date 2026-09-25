@@ -38,6 +38,31 @@
       color: #ff5d8f;
     }
 
+    .levels {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .levels button {
+      font-size: 1.25rem;
+      padding: 8px 16px;
+      background: #e9e4ff;
+      color: #3d2c8d;
+      box-shadow: 0 4px 0 #b8aef0;
+    }
+
+    .levels button:active {
+      box-shadow: 0 1px 0 #b8aef0;
+    }
+
+    .levels button.selected {
+      background: #7209b7;
+      color: #ffffff;
+      box-shadow: 0 4px 0 #4a0677;
+    }
+
     .question {
       font-size: 4rem;
       font-weight: bold;
@@ -117,6 +142,12 @@
   <div class="card">
     <h1>Let's Add!</h1>
 
+    <div class="levels" id="levels">
+      <button data-max="5" aria-pressed="false">Easy</button>
+      <button data-max="10" aria-pressed="true" class="selected">Medium</button>
+      <button data-max="20" aria-pressed="false">Hard</button>
+    </div>
+
     <div class="question" id="question"></div>
 
     <div class="answer-row">
@@ -145,9 +176,15 @@
     let correctCount = 0;
     let totalCount = 0;
 
-    // Pick a whole number from 0 to 10.
+    // Biggest number a question can use. Medium (10) is the starting level.
+    let maxNumber = 10;
+
+    // Remembers the 1-second wait after a correct answer, so it can be cancelled.
+    let nextQuestionTimer = null;
+
+    // Pick a whole number from 0 to maxNumber.
     function randomNumber() {
-      return Math.floor(Math.random() * 11);
+      return Math.floor(Math.random() * (maxNumber + 1));
     }
 
     function newQuestion() {
@@ -185,7 +222,7 @@
         // Lock the input so the same answer can't be counted twice.
         answerEl.disabled = true;
         checkButton.disabled = true;
-        setTimeout(newQuestion, 1000);
+        nextQuestionTimer = setTimeout(newQuestion, 1000);
       } else {
         messageEl.textContent = "Oops! Try again 💪";
         messageEl.className = "message wrong";
@@ -194,6 +231,25 @@
 
       updateScore();
     }
+
+    // Difficulty picker: switch the number range and start a fresh question.
+    const levelButtons = document.querySelectorAll("#levels button");
+
+    levelButtons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        maxNumber = Number(button.dataset.max);
+
+        levelButtons.forEach(function (other) {
+          other.classList.remove("selected");
+          other.setAttribute("aria-pressed", "false");
+        });
+        button.classList.add("selected");
+        button.setAttribute("aria-pressed", "true");
+
+        clearTimeout(nextQuestionTimer);
+        newQuestion();
+      });
+    });
 
     checkButton.addEventListener("click", checkAnswer);
 
